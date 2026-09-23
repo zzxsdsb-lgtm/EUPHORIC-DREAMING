@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EUPHORIC DREAMING</title>
+<style>
+  /* ============================================================
+     EUPHORIC DREAMING — digital art exhibition entrance
+     Cover background (assets/cover.svg) + three project cards.
+     Projects run isolated inside iframes — no CSS/JS/Canvas leaks.
+     Palette follows the cover: near-black purple / violet / off-white.
+     ============================================================ */
+
+  :root {
+    --bg: #08050d;                       /* page base: near-black purple   */
+    --ink: #f0f8ff;                      /* primary text (same as cover)   */
+    --ink-soft: rgba(240, 248, 255, 0.55);
+    --line: rgba(240, 248, 255, 0.16);
+    --accent: #a06bff;                   /* violet accent                  */
+    --accent-deep: #7d00ff;
+    --card-bg: rgba(12, 8, 18, 0.52);
+    --serif: "Didot", "Bodoni MT", "Playfair Display", Georgia, "Times New Roman", serif;
+    --sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", sans-serif;
+    --ease: 0.3s ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  body.modal-open { overflow: hidden; }
+
+  /* ---------------- cover background ---------------- */
+
+  .bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: url("assets/cover.svg") top center / cover no-repeat;
+  }
+
+  /* ---------------- homepage ---------------- */
+
+  .home {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;   /* cards sit over the violet glow at the bottom of the cover */
+    padding: 0 24px 9vh;
+    gap: 26px;
+  }
+
+  /* three project cards: name plates only (no thumbnails) */
+  .cards {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+  }
+
+  .card {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    width: 356px;
+    padding: 40px 24px;
+    cursor: pointer;
+    color: var(--ink);
+    font-family: inherit;
+    text-align: center;
+    border-radius: 3px;
+    transition: border-color var(--ease), transform var(--ease), box-shadow var(--ease), background var(--ease);
+    animation: rise 0.8s ease both;
+    animation-delay: calc(var(--i) * 110ms);
+  }
+  .card:hover,
+  .card:focus-visible {
+    border-color: rgba(160, 107, 255, 0.75);
+    background: rgba(24, 14, 38, 0.6);
+    transform: translateY(-5px);
+    box-shadow: 0 16px 44px rgba(125, 0, 255, 0.28);
+    outline: none;
+  }
+
+  .cname {
+    display: block;
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: 0.38em;
+    margin-left: 0.38em;      /* optically recenter tracked text */
+    text-transform: uppercase;
+    transition: color var(--ease), letter-spacing var(--ease);
+  }
+  .card:hover .cname,
+  .card:focus-visible .cname {
+    color: #d9c6ff;
+    letter-spacing: 0.44em;
+  }
+
+  .micro {
+    font-size: 10px;
+    letter-spacing: 0.5em;
+    margin-left: 0.5em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    animation: rise 0.8s ease 0.4s both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card, .micro { animation: none; }
+    .card, .thumb img { transition: none; }
+  }
+
+  /* ---------------- project modal ---------------- */
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 44px 40px;
+    background: rgba(4, 2, 8, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--ease), visibility var(--ease);
+  }
+  .overlay.open { opacity: 1; visibility: visible; }
+
+  .modal {
+    width: min(1120px, 100%);
+    height: min(780px, 100%);
+    display: flex;
+    flex-direction: column;
+    background: #0c0812;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 60px rgba(125, 0, 255, 0.10);
+    transform: translateY(10px);
+    transition: transform var(--ease);
+    overflow: hidden;
+  }
+  .overlay.open .modal { transform: translateY(0); }
+
+  .modal-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 10px 0 22px;
+    height: 54px;
+    border-bottom: 1px solid rgba(240, 248, 255, 0.1);
+  }
+
+  .modal-title {
+    font-family: var(--serif);
+    font-size: 14px;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .modal-close {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--ink);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background var(--ease), color var(--ease);
+    font-family: inherit;
+  }
+  .modal-close:hover { background: rgba(240, 248, 255, 0.08); color: #d9c6ff; }
+
+  .modal-desc {
+    flex: none;
+    padding: 10px 22px;
+    font-size: 12px;
+    line-height: 1.75;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    border-bottom: 1px solid rgba(240, 248, 255, 0.1);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;    /* 最多两行,完整文字见 title 悬停提示 */
+    overflow: hidden;
+  }
+
+  /* 底部参考链接栏 */
+  .modal-ref {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 22px;
+    border-top: 1px solid rgba(240, 248, 255, 0.1);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .modal-ref .ref-label {
+    font-size: 9px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    flex: none;
+  }
+  .modal-ref a {
+    color: #c9adff;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color var(--ease);
+  }
+  .modal-ref a:hover { color: #e4d6ff; text-decoration: underline; }
+
+  .modal-body {
+    position: relative;
+    flex: 1;
+    background: #000000;
+  }
+  .modal-body iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  .loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: #0c0812;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .loading.hide { opacity: 0; }
+
+  .spinner {
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(240, 248, 255, 0.18);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading span {
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    margin-left: 0.4em;
+    color: var(--ink-soft);
+  }
+
+  /* ---------------- mobile ---------------- */
+
+  @media (max-width: 1200px) {
+    .cards { gap: 20px; }
+    .card { width: 296px; padding: 32px 18px; }
+    .cname { font-size: 18px; }
+  }
+
+  @media (max-width: 760px) {
+    /* cover becomes a top hero at natural aspect; title stays readable */
+    .bg {
+      position: absolute;
+      bottom: auto;
+      aspect-ratio: 1366 / 768;
+      background-size: 100% 100%;
+      background-position: top center;
+    }
+    /* soft fade from the cover's lavender bottom edge into the dark page */
+    .bg::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 46%;
+      background: linear-gradient(to bottom, transparent, #2a1a44 78%, var(--bg));
+    }
+
+    .home {
+      justify-content: flex-start;
+      padding: calc(100vw * 0.5623 + 34px) 24px 56px;  /* below the hero */
+    }
+    .cards {
+      flex-direction: column;
+      width: min(400px, 90vw);
+    }
+    .card { width: 100%; padding: 34px 20px; }
+    .micro { order: -1; margin-bottom: 6px; }
+
+    .overlay { padding: 10px; }
+    .modal-head { padding-left: 16px; }
+    .modal-desc { padding: 8px 16px; -webkit-line-clamp: 3; }
+    .modal-ref { padding: 9px 16px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg" aria-hidden="true"></div>
+
+  <!-- ==================== homepage ==================== -->
+  <main class="home">
+    <!-- project cards are generated from the config below -->
+    <nav class="cards" id="cards" aria-label="Projects"></nav>
+    <p class="micro">A Group Digital Art Exhibition</p>
+  </main>
+
+  <!-- ==================== project modal ==================== -->
+  <div class="overlay" id="overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-head">
+        <div class="modal-title" id="modalTitle"></div>
+        <button class="modal-close" id="modalClose" aria-label="Close project">×</button>
+      </header>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-body" id="modalBody">
+        <!-- iframe is created on open and removed on close to free GPU / camera -->
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <span>LOADING</span>
+        </div>
+      </div>
+      <footer class="modal-ref" id="modalRef">
+        <span class="ref-label">Reference</span>
+        <a id="refLink" target="_blank" rel="noopener"></a>
+      </footer>
+    </div>
+  </div>
+
+<script>
+  /* ============================================================
+   * PROJECT CONFIG — the only place you need to edit
+   * ------------------------------------------------------------
+   * url:  currently points to the local project folders;
+   *       after deploying to GitHub Pages, just swap in links like
+   *       "https://yourname.github.io/Euphoria/"
+   * desc: 项目简介(弹窗内展示)
+   * ref:  底部参考链接(弹窗底部展示)
+   * ============================================================ */
+  const projects = [
+    {
+      name: "MELTDREAM",
+      desc: "以《亢奋(Euphoria)》的视觉美学与 Y3K 文化为灵感,将迷幻灯光、糖果色、液体流动与水钻质感结合,构建一个介于清醒与梦境之间的数字空间。流体在平静与亢奋之间不断变化,将情绪转化为持续运动的视觉体验。",
+      url:  "./MELTDREAM/index.html",
+      ref:  { label: "Shadertoy · Spilled (MsGSRd)", url: "https://www.shadertoy.com/view/MsGSRd" }
+    },
+    {
+      name: "FEVERDREAM",
+      desc: "本作品记录梦境交互作品的完整演示。通过流动色彩、跳动的粒子、快速切换的幻境画面,还原亢奋做梦时思绪跳跃、景象瞬息变化的感受。视频完整呈现鼠标操作与头部姿态体感交互效果:转头切换梦境场景,点头触发粒子爆发,摇头重置幻境,展示身体动作介入梦境的沉浸式体验。",
+      url:  "./FEVERDREAM/index.html",
+      ref:  { label: "Shadertoy · XsBXWt", url: "https://www.shadertoy.com/view/XsBXWt" }
+    },
+    {
+      name: "OVERDREAM",
+      desc: "作品以「进入一个亢奋而失控的梦境」为核心,通过高速旋转的虚拟空间、不断变化的梦核色彩、光影与视觉闪烁,营造一种持续运动和感知过载的梦境状态。同时加入摄像头手部交互,使观众的动作能够干扰空间的旋转与视觉状态,让观看者从旁观者变成梦境变化的参与者。",
+      url:  "./OVERDREAM/index.html",
+      ref:  { label: "Shadertoy · X3ySRc", url: "https://www.shadertoy.com/view/X3ySRc" }
+    }
+  ];
+
+  /* ---------------- page logic — normally no edits needed ---------------- */
+
+  const overlay    = document.getElementById("overlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalDesc  = document.getElementById("modalDesc");
+  const modalBody  = document.getElementById("modalBody");
+  const refLink    = document.getElementById("refLink");
+  const loading    = document.getElementById("loading");
+  const closeBtn   = document.getElementById("modalClose");
+
+  let currentIframe = null;
+  let isOpen        = false;
+
+  /* generate the three project cards */
+  const list = document.getElementById("cards");
+  projects.forEach((p, i) => {
+    const card = document.createElement("button");
+    card.className = "card";
+    card.style.setProperty("--i", i);
+    card.innerHTML = '<span class="cname">' + p.name + '</span>';
+    card.addEventListener("click", () => openProject(i));
+    list.appendChild(card);
+  });
+
+  /* open a project modal */
+  function openProject(index) {
+    const p = projects[index];
+
+    modalTitle.textContent = p.name;
+    modalDesc.textContent = p.desc;
+    modalDesc.title = p.desc;
+    refLink.href = p.ref.url;
+    refLink.textContent = p.ref.label;
+
+    /* fresh iframe every time so each project starts clean */
+    if (currentIframe) currentIframe.remove();
+    currentIframe = document.createElement("iframe");
+    /* camera permission declared: FEVERDREAM head tracking / OVERDREAM hand tracking */
+    currentIframe.setAttribute("allow", "autoplay; camera; microphone; fullscreen; accelerometer; gyroscope");
+    currentIframe.setAttribute("allowfullscreen", "");
+    currentIframe.setAttribute("title", p.name);
+    currentIframe.addEventListener("load", () => loading.classList.add("hide"));
+    currentIframe.src = p.url;
+    modalBody.insertBefore(currentIframe, loading);
+
+    loading.classList.remove("hide");
+    overlay.classList.add("open");
+    document.body.classList.add("modal-open");
+    isOpen = true;
+    closeBtn.focus();
+  }
+
+  /* close the modal and drop the iframe */
+  function closeProject() {
+    if (!isOpen) return;
+    isOpen = false;
+    overlay.classList.remove("open");
+    document.body.classList.remove("modal-open");
+    setTimeout(() => {
+      if (!isOpen && currentIframe) {
+        currentIframe.src = "about:blank";
+        currentIframe.remove();
+        currentIframe = null;
+      }
+    }, 300);
+  }
+
+  closeBtn.addEventListener("click", closeProject);
+
+  /* clicking the backdrop also closes */
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeProject();
+  });
+
+  /* Esc closes */
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeProject();
+  });
+</script>
+</body>
+</html>
